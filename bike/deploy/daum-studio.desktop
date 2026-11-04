@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=DAUM Studio
+Comment=Bike-Weboberflaeche auf dem Touchdisplay
+Exec=chromium --ozone-platform=x11 --kiosk --no-first-run --no-default-browser-check --password-store=basic --disable-gpu --disable-extensions --user-data-dir=/home/gha/.config/daum-studio-browser http://127.0.0.1:8000
+Terminal=false
+X-GNOME-Autostart-enabled=true

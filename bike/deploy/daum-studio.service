@@ -1,0 +1,14 @@
+[Unit]
+Description=DAUM Studio bike web application
+After=network-online.target bluetooth.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/gha/daum-studio
+ExecStart=/home/gha/daum-studio/.venv/bin/python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --workers 1
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
