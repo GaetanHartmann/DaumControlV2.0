@@ -3,7 +3,7 @@
 .timeline-grid-controls label{display:flex;align-items:center;gap:7px;font-size:11px;color:#65775c}
 .timeline-grid-controls select{min-height:36px;max-width:100%;padding:6px 8px;border:1px solid #d5ddce;border-radius:5px;background:#fffefa;color:#2d4836;font:inherit}
 .timeline-chart-scroll{width:100%;overflow-x:auto;overscroll-behavior-x:contain}
-.timeline-chart-scroll>svg{min-width:620px}
+.timeline-chart-scroll>svg{min-width:0}
 .timeline-stages{margin:12px 12px 0;color:#65775c;font-size:10px}
 .timeline-stages>span{font-weight:600}
 .timeline-stages ol{display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;list-style:none;margin:7px 0 0;padding:0 0 6px}
@@ -50,6 +50,6 @@
 @media(min-width:621px) and (max-height:600px){.training-active header{height:36px}.training-active .training-toolbar{margin:5px 0 6px;padding:5px 10px}.training-active .ride-scene,.training-active .ride-scene.training-view{min-height:205px}.training-active .scene-heading{padding:7px 12px}.training-active .timeline-chart-scroll>svg{height:90px}.training-active .timeline-grid-controls{margin:4px 10px}.training-active .timeline-grid-controls select{min-height:22px;padding:2px}.training-active .workout-timeline{padding-bottom:27px}.training-active .power-card{padding:9px}.training-active .power-number{font-size:34px;margin-top:3px}.training-active .power-card .muted{font-size:8px;margin-bottom:4px}.training-active .power-card input[type=range],.training-active .power-card .range-label{display:none}.training-active .target-control{padding-top:4px}.training-active .power-card .ride-buttons{margin-top:7px}.training-active .cockpit-metrics article{padding:5px 8px}.training-active .cockpit-metrics article>b{font-size:19px;margin:3px 0}.training-active .cockpit-metrics article>span{font-size:8px}.training-active .cockpit-metrics .text-button{min-height:12px;line-height:12px}.training-active .scene-footer{padding:7px}}
 .exercise-order{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.completion-grid small{font-size:10px;color:#64785c;display:block;margin-top:4px}
 
-@media(min-width:621px) and (max-width:1150px){.training-active .timeline-chart-scroll>svg{min-width:0}.training-active .timeline-chart-scroll .axis-label,.training-active .timeline-chart-scroll .block-label{font-size:16px}.training-active .timeline-chart-scroll .now-label,.training-active .timeline-chart-scroll .marker-values text{font-size:17px}}
+@media(min-width:621px) and (max-width:1150px){.training-active .timeline-chart-scroll>svg{min-width:0}}
 
 @media(min-width:621px) and (max-height:600px){.training-active .timeline-caption{display:none}.training-active .timeline-chart-scroll>svg{height:82px}.training-active .timeline-grid-controls{margin:3px 8px;gap:3px 6px}.training-active .timeline-grid-controls label{font-size:8px}.training-active .workout-timeline{padding-bottom:22px}}

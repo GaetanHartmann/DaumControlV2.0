@@ -81,24 +81,24 @@ def run(base):
             current = next(plan for plan in page.request.get(base + '/api/catalog').json()['plans'] if plan['id'] == profile['id'])
             assert current['revision'] > profile['revision']
             card.get_by_role('button', name='Training vorbereiten', exact=True).click()
-            expect(page.get_by_role('dialog', name='Training vorbereiten', exact=True)).to_be_visible()
+            expect(page.get_by_role('dialog', name='Training vorbereiten', exact=True)).to_have_count(0)
+            expect(page.get_by_label('Training auswählen', exact=True)).to_have_value(str(profile['id']))
             assert not page.request.get(base + '/api/state').json()['running'], 'Preparation must not start.'
-            page.get_by_role('button', name='Schließen', exact=True).click()
 
-            # A missing physical connection must still lead to the preparation
-            # dialog, where the user can connect. This response is intercepted;
-            # the test never attempts a connection to real hardware.
+            # Loading a profile never contacts hardware. Automatic preparation
+            # only runs after Start; a refused device check stays visible in
+            # the cockpit without opening a confirmation dialog.
             prepare_url = f'**/api/catalog/{profile["id"]}/prepare'
             page.route(prepare_url, lambda route: route.fulfill(
                 status=422, content_type='application/json', body=json.dumps({
                     'detail': 'Ergometer nicht verbunden. Verbinden oder bewusst Demo wählen.'})))
             page.get_by_role('button', name='Trainingskatalog', exact=True).click()
             card.get_by_role('button', name='Training vorbereiten', exact=True).click()
-            expect(page.get_by_role('dialog', name='Training vorbereiten', exact=True)).to_be_visible()
-            expect(page.get_by_role('dialog', name='Training vorbereiten', exact=True)).to_contain_text('Ergometer nicht verbunden')
+            expect(page.get_by_role('dialog', name='Training vorbereiten', exact=True)).to_have_count(0)
+            page.get_by_role('button', name='Training starten', exact=True).click()
+            expect(page.get_by_role('alert').filter(has_text='Ergometer nicht verbunden')).to_be_visible()
             assert not page.request.get(base + '/api/state').json()['running']
             page.unroute(prepare_url)
-            page.get_by_role('button', name='Schließen', exact=True).click()
 
             page.get_by_role('button', name='KI-Coach', exact=True).click()
             page.get_by_text('Optionalen KI-Dienst verwenden', exact=True).click()
@@ -147,6 +147,7 @@ def run(base):
             expect(proposal.get_by_role('img', name='Leistungskurve des Coach-Vorschlags', exact=True)).to_be_visible()
             expect(page.get_by_role('button', name='Start im Cockpit vorbereiten', exact=True)).to_be_disabled()
             proposal.get_by_role('button', name='Vorschlag übernehmen', exact=True).click()
+            expect(page.get_by_role('button', name='Start im Cockpit vorbereiten', exact=True)).to_be_enabled()
             proposal.get_by_role('button', name='Übernommenes Profil prüfen', exact=True).click()
             expect(page.get_by_role('button', name='Start im Cockpit vorbereiten', exact=True)).to_be_enabled()
             # Any edit removes the old acceptance/validation receipt in the UI.
@@ -163,9 +164,9 @@ def run(base):
                 proposal.screenshot(path=str(capture))
                 print('Coach preview screenshot: ' + str(capture))
             proposal.get_by_role('button', name='Start im Cockpit vorbereiten', exact=True).click()
-            expect(page.get_by_role('dialog', name='Training vorbereiten', exact=True)).to_be_visible()
+            expect(page.get_by_role('dialog', name='Training vorbereiten', exact=True)).to_have_count(0)
+            expect(page.get_by_role('button', name='Training starten', exact=True)).to_be_visible()
             assert not page.request.get(base + '/api/state').json()['running']
-            page.get_by_role('button', name='Schließen', exact=True).click()
 
             for label in ['Trainingskatalog', 'KI-Coach']:
                 page.get_by_role('button', name=label, exact=True).click()

@@ -54,9 +54,10 @@ def run(base):
             page.goto(base + '/#/trainings')
             card = page.locator('.catalog-card').filter(has=page.get_by_role('heading', name=original['name'], exact=True))
             card.get_by_role('button', name='Training vorbereiten', exact=True).click()
-            expect(page.get_by_role('dialog', name='Training vorbereiten', exact=True)).to_be_visible()
+            expect(page.get_by_role('dialog', name='Training vorbereiten', exact=True)).to_have_count(0)
             assert not page.request.get(base + '/api/state').json()['running']
-            page.get_by_role('button', name='Training jetzt starten', exact=True).click()
+            expect(page.get_by_role('button', name='Zeitachse: Leistung um 10 Watt erhöhen', exact=True)).to_be_disabled()
+            page.get_by_role('button', name='Training starten', exact=True).click()
             expect(page.get_by_role('button', name='Pause', exact=True)).to_be_visible()
             wait_state(page,base,lambda s:s['elapsed']>=1)
             first = page.request.get(base + '/api/state').json()
@@ -75,7 +76,7 @@ def run(base):
             assert burst[-1]['watts'] == 155 and burst[-1]['source'] == 'manual_slider'
             expect(page.locator('.control-source')).to_have_text('Profil verschoben (+95 W)')
             assert page.locator('.workout-timeline svg path[stroke-dasharray="6 4"]').count() == 2
-            page.get_by_role('button', name='Leistung um 10 Watt erhöhen', exact=True).click()
+            page.get_by_role('button', name='Zeitachse: Leistung um 10 Watt erhöhen', exact=True).click()
             wait_state(page,base,lambda s:s['requested_target_watts']==165)
             assert commands[-1]['source'] == 'manual_button'
 
@@ -128,6 +129,9 @@ def run(base):
             assert crossed['session_id'] == session_id and crossed['step_index'] == 1
             assert crossed['requested_target_watts'] == 185 and crossed['planned_target_watts'] == 100
             assert crossed['control_mode'] == 'manual_override' and crossed['distance'] >= first['distance']
+            page.get_by_role('button', name='Zeitachse: Leistung um 10 Watt erhöhen', exact=True).click()
+            wait_state(page,base,lambda s:s['requested_target_watts']==195 and s['power_offset_watts']==95)
+            assert page.locator('.workout-timeline svg path[stroke-dasharray="6 4"]').count() == 2
             page.get_by_role('button', name='Zurück zum Trainingsplan', exact=True).click()
             wait_state(page,base,lambda s:s['requested_target_watts']==100 and s['control_mode']=='plan')
             returned = page.request.get(base + '/api/state').json()
@@ -159,7 +163,7 @@ def run(base):
             assert not errors, errors
             print(json.dumps({'slider_burst_requests': len(burst), 'last_target_wins': True,
                               'override_across_phase': True, 'return_current_phase': True,
-                              'pause_prepares_without_ack': True, 'preserved_plan': True,
+                              'pause_prepares_without_ack': True, 'preserved_plan': True, 'timeline_buttons_shift_curve': True,
                               'reload_does_not_resume': True,
                               'history_events': True, 'touch_and_responsive': True,
                               'javascript_errors': errors}))

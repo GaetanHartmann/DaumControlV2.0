@@ -176,7 +176,6 @@ def run(base):
             page.get_by_role('button', name='Training', exact=True).click()
             page.get_by_label('Training auswählen', exact=True).select_option(str(short.json()['id']))
             page.get_by_role('button', name='Training starten', exact=True).click()
-            page.get_by_role('button', name='Training jetzt starten', exact=True).click()
             expect(page.get_by_role('button', name='Pause', exact=True)).to_be_visible()
             deadline = time.monotonic() + 8
             while page.request.get(base + '/api/state').json()['elapsed'] < 1:
@@ -188,7 +187,7 @@ def run(base):
             for width, height in [(1024, 768), (390, 844), (800, 480)]:
                 page.set_viewport_size({'width': width, 'height': height})
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), width
-                expect(page.get_by_role('region', name='Zeitachse, horizontal scrollbar')).to_be_visible()
+                expect(page.get_by_role('region', name='Zeitachse, an Bildschirmbreite angepasst')).to_be_visible()
                 metrics = page.get_by_label('Aktuelle Trainingswerte', exact=True)
                 expect(metrics.locator('article')).to_have_count(6)
                 assert metrics.locator('article>b').evaluate_all('(nodes)=>nodes.every(n=>parseFloat(getComputedStyle(n).fontSize)>=17)')

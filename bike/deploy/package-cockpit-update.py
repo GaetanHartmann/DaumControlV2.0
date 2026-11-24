@@ -53,7 +53,8 @@ def main():
     manifest = json.dumps(dict(format_version=1, created_at=datetime.now(timezone.utc).isoformat(),
         feature_set=['catalog', 'live_target_override', 'coach', 'routes_foundation',
                      'verified_power_provenance', 'daum_s23_value_echo',
-                     'fullscreen_timeline', 'fullscreen_metrics', 'offline_real_routes'], files=payload), indent=2).encode()
+                     'fullscreen_timeline', 'fullscreen_metrics', 'offline_real_routes',
+                     'responsive_timeline', 'direct_start', 'whole_profile_watt_offset'], files=payload), indent=2).encode()
     output.parent.mkdir(parents=True, exist_ok=True)
     with tarfile.open(output, 'w:gz') as archive:
         for path in files:

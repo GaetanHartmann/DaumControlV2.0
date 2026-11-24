@@ -51,12 +51,13 @@ gekennzeichneten Beispielwerten. Er bietet keine medizinische Einstufung und
 keine automatische Belastungssteigerung. Demo-Einheiten werden nicht als reale
 Trainingsgrundlage ausgegeben. Fehlende Daten werden erklärt.
 
-Der Ablauf ist: Vorschlag erzeugen, Kurve prüfen, Segmente ändern, übernehmen,
-erneut prüfen, Start vorbereiten und erst im Cockpit bewusst starten. Alle
+Der Ablauf ist: Vorschlag erzeugen, Kurve ansehen, Segmente ändern, übernehmen,
+ins Cockpit wechseln und dort bewusst starten. Die Profil-/Grenzenprüfung läuft
+beim Start automatisch; eine freiwillige Prüfung im Coach bleibt verfügbar. Alle
 Coach-/Katalogendpunkte bleiben von Gerätebefehlen getrennt. Erneute Übernahme
 desselben Vorschlags erzeugt kein zweites Profil. Nach einer nachträglichen
 Bearbeitung wird das vorhandene übernommene Profil mit neuer Revision gespeichert
-und muss erneut geprüft werden.
+und wird beim nächsten Start automatisch erneut geprüft.
 
 ## Optionaler externer OpenAI-Adapter
 

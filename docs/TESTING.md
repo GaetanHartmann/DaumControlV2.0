@@ -121,3 +121,14 @@ bekannte Messwerte per Bluetooth gesendet. Archivierte Rohwerte bleiben erhalten
 synthetischen WebSocket; das Backend bleibt dabei ohne jeden Steuer-POST im Demo-
 Leerlauf. Der ausdrücklich freigegebene reale 25/35/25-W-Test mit numerischem Echo
 und anschließendem lesendem S20-Freigabenachweis steht separat in der Übergabe.
+
+
+## Mobile Zeitachse und direkter Start – 24.11.2026
+
+[Änderungen, Messwerte und Grenzen](change-requests/mobile-timeline-and-direct-start-2026-11-24.md).
+Die isolierten Browserprüfungen `browser_mobile_timeline_check.py --serve` und
+`browser_direct_start_check.py --serve` prüfen adaptive Diagrammgrößen,
+kurze Stufen, Profilversatz und den Start ohne zusätzlichen Prüfdialog.
+Ersterer prüft 30 Vorschauen und drei aktive, ausdrücklich synthetische Ansichten.
+Die vorhandenen Livepower-/Fullscreen-Prüfer testen auch die direkten Timeline-±10-W-Tasten.
+Alle laufen gegen eigene temporäre Demo-Server; keine echte Hardware wird angesteuert.

@@ -166,6 +166,25 @@ def run(base):
                 sockets[-1].send(json.dumps(fake))
             for endpoint in ['power', 'pause', 'stop', 'power/plan']:
                 page.route('**/api/' + endpoint, command)
+            # Direct +/- controls are available without opening the slider.
+            expect(dialog.locator('.fullscreen-watt-controls')).to_have_count(0)
+            quick_up = dialog.get_by_role('button', name='Zeitachse: Leistung um 10 Watt erhöhen', exact=True)
+            quick_down = dialog.get_by_role('button', name='Zeitachse: Leistung um 10 Watt reduzieren', exact=True)
+            touch_target(quick_up)
+            touch_target(quick_down)
+            quick_up.click()
+            expect(dialog.locator('[data-metric="requested"]')).to_contain_text('175 W')
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline and not any(endpoint == 'power' and payload.get('watts') == 175 for endpoint, payload in commands):
+                page.wait_for_timeout(20)
+            assert any(endpoint == 'power' and payload.get('watts') == 175 and payload.get('source') == 'manual_button' for endpoint, payload in commands), commands
+            expect(dialog.locator('.fullscreen-watt-controls')).to_have_count(0)
+            quick_down.click()
+            expect(dialog.locator('[data-metric="requested"]')).to_contain_text('165 W')
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline and not any(endpoint == 'power' and payload.get('watts') == 165 for endpoint, payload in commands):
+                page.wait_for_timeout(20)
+            assert any(endpoint == 'power' and payload.get('watts') == 165 for endpoint, payload in commands), commands
             dialog.get_by_role('button', name='Wattsteuerung', exact=False).click()
             for tile in dialog.locator('.fullscreen-metric').all():
                 assert tile.evaluate('n=>n.scrollHeight<=n.clientHeight+1 && n.scrollWidth<=n.clientWidth+1')

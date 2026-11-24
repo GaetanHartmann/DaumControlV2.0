@@ -29,12 +29,8 @@ with sync_playwright() as p:
     plan = next(plan for plan in plans if plan['name'] == 'Grundlage 35')
     page.get_by_label('Training auswählen', exact=True).select_option(str(plan['id']))
     page.get_by_label('Trainingsintensität in Prozent').fill('80')
-    page.get_by_role('button', name='Ride starten', exact=True).click()
-    dialog = page.get_by_role('dialog', name='Training vorbereiten')
-    expect(dialog).to_be_visible()
-    expect(dialog.locator('p').filter(has_text='Leistungsanpassung:')).to_contain_text('10 W')
-    assert not page.request.get(base + '/api/state').json()['running']
-    dialog.get_by_role('button', name='Training jetzt starten', exact=True).click()
+    page.get_by_role('button', name='Training starten', exact=True).click()
+    expect(page.get_by_role('dialog', name='Training vorbereiten')).to_have_count(0)
     page.get_by_role('button', name='Pause', exact=True).wait_for()
     state = page.request.get(base + '/api/state').json()
     assert state['target'] == 76, state
@@ -71,6 +67,6 @@ with sync_playwright() as p:
         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), width
         page.get_by_role('button', name='Schließen', exact=True).click()
     assert not errors, errors
-    print('Browser OK: per-user +/- watts, exact plan target, preflight, multi-device switch, '
+    print('Browser OK: per-user +/- watts, exact plan target, direct start, multi-device switch, '
           'Connect All partial results and sensor choice, mobile widths; no JS errors.')
     browser.close()

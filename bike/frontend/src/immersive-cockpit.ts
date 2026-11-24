@@ -1,5 +1,6 @@
 import { computed, onMounted, onUnmounted, reactive, ref, watch, type Ref } from 'vue';
 import { WorkoutTimeline } from './training-ui';
+import { TimelinePowerControls } from './timeline-power-controls';
 import './immersive-cockpit.css';
 
 export type CockpitFullscreenMode = 'timeline' | 'metrics';
@@ -48,7 +49,7 @@ export function useCockpitFullscreen(tab:Ref<string>, state:Ref<any>) {
 }
 
 export const FullscreenTrainingView = {
- components:{WorkoutTimeline},
+ components:{WorkoutTimeline,TimelinePowerControls},
  props:{
   mode:{default:'timeline'},state:{default:()=>({})},steps:{default:()=>[]},samples:{default:()=>[]},ftp:{default:150},
   elapsed:{default:0},requestedTarget:{default:null},powerLimits:{default:()=>({minimum:25,maximum:400,step:5})},
@@ -133,7 +134,7 @@ export const FullscreenTrainingView = {
   <div v-if="message||state.error||!online" class="fullscreen-error" role="alert">{{message||state.error||'Serververbindung unterbrochen. Bike bei Bedarf direkt am Geräte-Cockpit bedienen.'}}</div>
   <div v-if="mode==='timeline'" class="fullscreen-timeline-content"><WorkoutTimeline :steps="steps" :elapsed="elapsed" :samples="samples" :power="measurement('power')" :heart-rate="measurement('heart_rate')" :live="online&&state.running&&!state.paused" :target="target||0" :control-events="state.control_events||[]" :offset="state.power_offset_watts||0" :limits="powerLimits" :preserve-aspect="true" :ftp="ftp"/></div>
   <div v-else class="fullscreen-metric-grid" aria-label="Alle Trainingskennzahlen"><article v-for="tile in tiles" :key="tile.key" class="fullscreen-metric" :data-metric="tile.key" :class="{'text-value':tile.text}" :title="tile.note"><span>{{tile.label}}</span><b>{{tile.value}} <small>{{tile.unit}}</small></b><p>{{tile.note}}</p></article></div>
-  <div class="fullscreen-power-panel" :class="{expanded:controlsOpen}"><div class="fullscreen-power-summary"><button :aria-expanded="controlsOpen" aria-controls="fullscreen-watt-controls" @click="controlsOpen=!controlsOpen">Wattsteuerung <span aria-hidden="true">{{controlsOpen?'▾':'▴'}}</span></button><span><b>{{format(target)}} W angefordert</b> · {{controlLabel}}</span><small>{{confirmation}}</small></div>
+  <div class="fullscreen-power-panel" :class="{expanded:controlsOpen}"><div class="fullscreen-power-summary"><button :aria-expanded="controlsOpen" aria-controls="fullscreen-watt-controls" @click="controlsOpen=!controlsOpen">Wattsteuerung <span aria-hidden="true">{{controlsOpen?'▾':'▴'}}</span></button><TimelinePowerControls :target="target" :power-limits="powerLimits" :locked="manualLocked||(!state.running&&!!steps.length)" :control-mode="state.control_mode" :offset="state.power_offset_watts" @power="power"/><span>{{controlLabel}}</span><small>{{confirmation}}</small></div>
    <div v-if="controlsOpen" id="fullscreen-watt-controls" class="fullscreen-watt-controls"><button class="fullscreen-watt-step" aria-label="Vollbild: Leistung um 10 Watt reduzieren" :disabled="manualLocked||target==null||target<=powerLimits.minimum" @click="power(target-10,'manual_button')">−10 W</button><label><span>Zielleistung · {{format(target)}} W</span><input aria-label="Vollbild: Zielleistung in Watt" type="range" :min="powerLimits.minimum" :max="powerLimits.maximum" :step="powerLimits.step" :value="target" :disabled="manualLocked" @input="power(Number($event.target.value),'manual_slider')"></label><button class="fullscreen-watt-step" aria-label="Vollbild: Leistung um 10 Watt erhöhen" :disabled="manualLocked||target==null||target>=powerLimits.maximum" @click="power(target+10,'manual_button')">+10 W</button><button class="fullscreen-return-plan" :disabled="manualLocked||!state.running||!state.steps?.length" @click="$emit('return-plan')">Zurück zum Trainingsplan</button></div>
   </div>
  </section>`

@@ -22,9 +22,7 @@ with sync_playwright() as p:
     card=page.locator('.plan-card').filter(has=page.get_by_role('heading',name='VO₂max 45 · 4×4',exact=True))
     card.get_by_role('button',name='Vorschau & auswählen',exact=True).click()
     page.get_by_role('img',name='Trainings-Zeitachse mit Planleistung, tatsächlicher Leistung und aktueller Zeitposition').wait_for()
-    page.get_by_role('button',name='Ride starten',exact=True).click()
-    page.get_by_role('dialog',name='Training vorbereiten').wait_for()
-    page.get_by_role('button',name='Training jetzt starten',exact=True).click()
+    page.get_by_role('button',name='Training starten',exact=True).click()
     page.get_by_role('button',name='Pause',exact=True).wait_for()
     page.wait_for_timeout(2200)
     assert page.locator('.block-label').count()>0
@@ -36,10 +34,9 @@ with sync_playwright() as p:
     page.get_by_role('img',name='Animierte Radfahrt durch eine Berglandschaft').wait_for()
     page.get_by_role('button',name='Training beenden').click()
     page.get_by_role('button',name='Pulsgeführt',exact=True).click()
-    page.get_by_role('button',name='Ride starten',exact=True).click()
+    page.get_by_role('button',name='Training starten',exact=True).click()
     page.get_by_role('alert').filter(has_text='frisches Pulssignal').wait_for()
-    assert page.get_by_role('button',name='Training jetzt starten',exact=True).is_disabled()
-    page.get_by_role('button',name='Schließen',exact=True).click()
+    assert not page.request.get('http://127.0.0.1:8000/api/state').json()['running']
     page.get_by_role('button',name='Zeitachse',exact=True).click()
     for width,height in [(390,844),(800,480)]:
         page.set_viewport_size({'width':width,'height':height})

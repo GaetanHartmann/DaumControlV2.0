@@ -1,0 +1,52 @@
+/* SVG coordinates follow its measured CSS size: text remains real screen pixels. */
+.workout-timeline.responsive-timeline{min-width:0}
+.responsive-timeline .timeline-chart-scroll{width:100%;min-width:0;overflow:hidden;touch-action:pan-y}
+.responsive-timeline .timeline-chart-scroll>svg{display:block;width:100%;min-width:0;height:220px;overflow:hidden}
+.responsive-timeline .axis-label{font-size:11px;font-weight:500;fill:#63745a}
+.responsive-timeline .block-label{font-size:12px;font-weight:650;fill:#36513a;paint-order:stroke fill;stroke:#fffef9;stroke-width:2px;stroke-linejoin:round}
+.responsive-timeline .block-duration,.responsive-timeline .block-original{font-size:11px;font-weight:500}
+.responsive-timeline .now-label,.responsive-timeline .marker-values text{font-size:12px;font-weight:650;fill:#244e39}
+.responsive-timeline .timeline-legend{flex-wrap:wrap;gap:6px 14px;line-height:1.4}
+.responsive-timeline .timeline-legend span{min-width:0;max-width:100%}
+.responsive-timeline .timeline-legend .adjusted{height:7px;background:#75966d}
+.responsive-timeline .timeline-selected-step{display:flex;align-items:center;gap:6px;min-width:0;flex-shrink:0;margin:6px 0;padding:4px;border:1px solid #ceddc3;border-radius:7px;background:#edf3e6}
+.responsive-timeline .timeline-selected-step>div{flex:1;min-width:0;display:grid;gap:3px}
+.responsive-timeline .timeline-selected-step span{font-size:11px;line-height:1.35;overflow-wrap:anywhere;color:#64755c}
+.responsive-timeline .timeline-selected-step b{font-size:13px;line-height:1.3;color:#2e5238}
+.responsive-timeline .timeline-selected-step small,.responsive-timeline .timeline-stages li small{font-size:10px;line-height:1.35;color:#5f7458}
+.responsive-timeline .timeline-stages li small{display:block;margin-top:3px}
+.responsive-timeline .timeline-selected-step>button{width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border:1px solid #cbd8bf;border-radius:6px;background:#fffef9;font-size:24px;color:#31583c}
+.responsive-timeline .timeline-stages li{padding:0;max-width:220px}
+.responsive-timeline .timeline-stages li>button{display:block;width:100%;min-height:44px;padding:8px 10px;border:0;background:transparent;text-align:left;white-space:normal;color:inherit}
+.responsive-timeline .timeline-stages li.selected{border-color:#31583c;background:#e4eddb}
+.fullscreen-timeline-content .responsive-timeline{min-height:0}
+.fullscreen-timeline-content .responsive-timeline .timeline-chart-scroll{flex:1;min-height:0;overflow:hidden}
+.fullscreen-timeline-content .responsive-timeline .timeline-chart-scroll>svg{height:100%;min-width:0;width:100%}
+@media(max-width:620px){
+ .responsive-timeline .timeline-chart-scroll>svg{height:240px}
+ .responsive-timeline .timeline-caption{margin:10px 3px 6px}
+ .responsive-timeline .timeline-caption b{font-size:13px}
+ .responsive-timeline .timeline-caption>span{display:none}
+ .responsive-timeline .timeline-grid-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 8px;margin:4px 3px 8px}
+ .responsive-timeline .timeline-grid-controls label{min-width:0;min-height:44px;font-size:11px;gap:5px;line-height:1.35}
+ .responsive-timeline .timeline-grid-controls select{min-height:44px;min-width:0;flex:1;padding:6px 4px;font-size:11px}
+ .responsive-timeline .timeline-grid-controls input[type=checkbox]{width:18px;height:18px;min-width:18px;margin:0}
+ .responsive-timeline .timeline-legend{justify-content:flex-start;gap:6px 12px;font-size:10px;padding:5px 0}
+ .responsive-timeline .timeline-stages{margin:8px 3px 0;font-size:11px}
+ .responsive-timeline .timeline-stages li span,.responsive-timeline .timeline-stages li b{font-size:11px}
+ .fullscreen-timeline-content .responsive-timeline .timeline-chart-scroll>svg{height:100%}
+ .fullscreen-timeline-content .responsive-timeline .timeline-legend{font-size:10px;gap:5px 10px}
+}
+@media(min-width:621px) and (max-width:1150px) and (min-height:601px){
+ .training-active .responsive-timeline .timeline-chart-scroll>svg{height:200px}
+}
+@media(min-width:621px) and (max-height:600px){
+ .training-active .responsive-timeline .timeline-chart-scroll>svg{height:82px}
+ .training-active .ride-scene .responsive-timeline{padding-bottom:30px}
+ .training-active .ride-scene .timeline-grid-controls{flex-wrap:nowrap}
+ .training-active .ride-scene .timeline-grid-controls label:nth-child(n+3){font-size:0;gap:3px}
+ .training-active .ride-scene .timeline-grid-controls label:nth-child(3)::after{content:'W';font-size:9px}
+ .training-active .ride-scene .timeline-grid-controls label:nth-child(4)::after{content:'Puls';font-size:9px}
+ .training-active .ride-scene .responsive-timeline .timeline-selected-step{display:none}
+ .fullscreen-timeline-content .responsive-timeline .timeline-chart-scroll>svg{height:100%}
+}
