@@ -35,8 +35,9 @@ def install():
         if shutil.which(program) is None:
             raise SystemExit(f'Missing program: {program}')
     source = Path(__file__).resolve().with_name('display-black-overlay.py')
-    if not source.exists():
-        raise SystemExit('Place display-black-overlay.py beside this installer.')
+    boot_source = source.with_name('display-boot.py')
+    if not source.exists() or not boot_source.exists():
+        raise SystemExit('Place display-black-overlay.py and display-boot.py beside this installer.')
     destination = Path.home() / '.local/share/daum-studio/display-idle'
     destination.mkdir(parents=True, exist_ok=True)
     ensure_layer_typelib(destination)
@@ -44,20 +45,21 @@ def install():
     blank = unit.with_name('daum-studio-display-blank.service')
     autostart = Path.home() / '.config/autostart/daum-studio-display-idle.desktop'
     helper = destination / source.name
+    boot_helper = destination / boot_source.name
     backup = Path.home() / '.local/share/daum-studio/display-idle-backups' / datetime.now().strftime('%Y%m%d-%H%M%S-%f')
-    for path in (unit, blank, autostart, helper):
+    for path in (unit, blank, autostart, helper, boot_helper):
         if path.exists():
             backup.mkdir(parents=True, exist_ok=True)
             shutil.copy2(path, backup / path.name)
         path.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, helper)
+    shutil.copy2(boot_source, boot_helper)
     blank.write_text('''[Unit]
 Description=DAUM black Wayland display overlay with touch wake
 
 [Service]
 Type=simple
 Environment=XDG_RUNTIME_DIR=%t
-Environment=WAYLAND_DISPLAY=wayland-0
 Environment=GDK_BACKEND=wayland
 ExecStart=/usr/bin/python3 %h/.local/share/daum-studio/display-idle/display-black-overlay.py
 ExecStopPost=/usr/bin/rm -f %t/daum-display-saver.ready
@@ -69,25 +71,27 @@ Description=DAUM black display saver after five idle minutes
 [Service]
 Type=simple
 Environment=XDG_RUNTIME_DIR=%t
-Environment=WAYLAND_DISPLAY=wayland-0
+ExecStartPre=/usr/bin/python3 %h/.local/share/daum-studio/display-idle/display-boot.py --wait 30
 ExecStart=/usr/bin/swayidle -w -C /dev/null timeout 300 "/usr/bin/systemctl --user start daum-studio-display-blank.service" resume "/usr/bin/systemctl --user kill --kill-whom=main --signal=USR1 daum-studio-display-blank.service 2>/dev/null || true"
 ExecStopPost=-/usr/bin/systemctl --user stop daum-studio-display-blank.service
-ExecStopPost=-/usr/bin/wlopm --on HDMI-A-1
+ExecStopPost=-/usr/bin/python3 %h/.local/share/daum-studio/display-idle/display-boot.py --wait 0
 Restart=on-failure
 RestartSec=3
-TimeoutStopSec=5
+TimeoutStartSec=45
+TimeoutStopSec=15
 ''', encoding='utf-8')
     # Raspberry Pi labwc does not activate graphical-session.target here.
     autostart.write_text('''[Desktop Entry]
 Type=Application
 Name=DAUM black display saver
 Comment=Black screen after five idle minutes; touch to wake, HDMI stays active
-Exec=/usr/bin/systemctl --user restart daum-studio-display-idle.service
+Exec=/usr/bin/python3 "{boot_path}" --start-idle
 Terminal=false
 NoDisplay=true
-''', encoding='utf-8')
+'''.replace('{boot_path}', str(boot_helper)), encoding='utf-8')
     subprocess.run(['systemctl', '--user', 'daemon-reload'], check=True)
-    subprocess.run(['systemctl', '--user', 'restart', unit.name], check=True)
+    # Import the actual graphical-session environment before starting swayidle.
+    subprocess.run(['python3', str(boot_helper), '--start-idle'], check=True)
     subprocess.run(['systemctl', '--user', 'is-active', '--quiet', unit.name], check=True)
     print('Black display saver installed: 300 seconds; HDMI/backlight stay powered.')
     if backup.exists():

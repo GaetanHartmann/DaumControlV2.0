@@ -2,6 +2,8 @@
 import csv
 import io
 import json
+import os
+from .metrics import normalize_summary
 from datetime import datetime, timedelta, timezone
 import xml.etree.ElementTree as ET
 
@@ -34,11 +36,34 @@ def iso(value):
 
 def payload(ride):
     samples=json.loads(ride.pop('samples_json','[]'))
-    return dict(format_version=1,source='DAUM Studio',activity='indoor_cycling',
+    control_events=json.loads(ride.pop('control_events_json','[]') or '[]')
+    if 'summary_json' in ride:
+        ride['statistics'] = normalize_summary(json.loads(ride.pop('summary_json') or '{}'), ride.get('mode'))
+    if ride.get('mode') == 'daum' and not (ride.get('statistics') or {}).get('power_measurement_verified'):
+        ride['reported_unverified_energy_kj'] = ride.get('energy')
+        ride['energy'] = None
+        # Preserve archived numeric data under an explicit reported field;
+        # never render/export an old setpoint-like value as measured power.
+        for sample in samples:
+            if len(sample) < 2:
+                continue
+            reported = sample[1]
+            sample.extend([None] * max(0, 13-len(sample)))
+            if sample[12] is None:
+                sample[12] = reported
+            sample[1] = None
+        for event in control_events:
+            if event.get('measured_watts') is not None:
+                event['reported_unverified_power_watts'] = event.pop('measured_watts')
+                event['measured_watts'] = None
+    return dict(format_version=1,source=os.getenv('FITNESS_PRODUCT_NAME', 'Fitness-Cockpit'),
+                activity=ride.get('activity_type') or 'indoor_cycling',
                 simulated=ride['mode']=='demo',start_time=iso(utc_time(ride)),
                 start_time_estimated=not bool(ride.get('started_at')),summary=ride,
                 sample_columns=['elapsed_seconds','power_watts','target_watts','heart_rate_bpm','cadence_rpm','speed_kmh','distance_km','timestamp_utc'],
-                samples=samples,notes='Mechanische Arbeit in kJ, keine gemessenen Kalorien. Fehlende Werte bleiben leer.')
+                samples=samples,control_events=control_events,
+                control_sample_columns=['elapsed_seconds','power_watts','requested_target_watts','heart_rate_bpm','cadence_rpm','speed_kmh','distance_km','timestamp_utc','planned_target_watts','applied_target_watts','target_command_status','target_source','reported_power_watts'],
+                notes='Mechanische Arbeit in kJ, keine gemessenen Kalorien. Fehlende Werte bleiben leer. Unverifizierte Daum-Wattmeldungen bleiben als reported_power_watts erhalten, nicht als gemessene Leistung oder mechanische Arbeit. Zusatzfelder der neuen Messspur und Steuerereignisse sind getrennt benannt; historische Spuren können nur die ersten acht Felder besitzen.')
 
 
 def csv_export(data):
@@ -62,7 +87,7 @@ def tcx_export(data):
             node.text=str(value)
         return node
     activities=add(root,'Activities')
-    activity=add(activities,'Activity',Sport='Biking')
+    activity=add(activities,'Activity',Sport='Running' if data.get('activity') in ('running', 'treadmill') else 'Biking')
     ride=data['summary']
     start=utc_time(ride)
     add(activity,'Id',iso(start))
@@ -94,9 +119,12 @@ def tcx_export(data):
             tpx=add(extensions,'TPX',namespace=EXT)
             if speed is not None:
                 add(tpx,'Speed',round(speed/3.6,5),namespace=EXT)
-            add(tpx,'Watts',max(0,round(power)),namespace=EXT)
+            if power is not None:
+                add(tpx,'Watts',max(0,round(power)),namespace=EXT)
     prefix='DEMO / SIMULIERTE WERTE. ' if data['simulated'] else ''
-    add(activity,'Notes',prefix+(ride.get('plan_name') or 'Indoor Cycling')+
-        '. Indoor-Radfahrt ohne GPS. Kalorien nicht gemessen (Pflichtfeld Calories=0). Mechanische Arbeit: '+str(round(ride['energy'],1))+
-        ' kJ. Keine VO2max-Messung.'+(' Nur Zusammenfassung; keine gespeicherte Messspur.' if not data['samples'] else ''))
+    work = str(round(ride['energy'], 1))+' kJ' if ride.get('energy') is not None else 'nicht verfügbar'
+    add(activity,'Notes',prefix+(ride.get('plan_name') or 'Indoor Training')+
+        '. Ohne GPS. Kalorien nicht gemessen (Pflichtfeld Calories=0). Mechanische Arbeit: '+work+
+        '. Quelle: '+('manuelle Eingabe' if ride.get('mode')=='manual' else 'Gerät / gekennzeichnete Simulation')+
+        '. Keine VO2max-Messung.'+(' Nur Zusammenfassung; keine gespeicherte Messspur.' if not data['samples'] else ''))
     return ET.tostring(root,encoding='utf-8',xml_declaration=True)

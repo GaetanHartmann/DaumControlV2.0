@@ -1,0 +1,56 @@
+[
+  {
+    "id": "grafrath-ampermoos",
+    "name": "Grafrath – Ampermoos",
+    "file": "grafrath-ampermoos.json",
+    "description": "Kurze Runde aus verbundenen OSM-Radwegen südlich von Grafrath.",
+    "source": "openstreetmap",
+    "attribution": "© OpenStreetMap contributors (ODbL); Geobasisdaten: Bayerische Vermessungsverwaltung – www.geodaten.bayern.de (Daten verändert), CC BY 4.0",
+    "license_url": "https://opendatacommons.org/licenses/odbl/1-0/",
+    "source_urls": [
+      "https://api.openstreetmap.org/api/0.6/relation/6795968/full",
+      "https://api.openstreetmap.org/api/0.6/relation/6805329/full",
+      "https://api.openstreetmap.org/api/0.6/relation/13235623/full",
+      "https://api.openstreetmap.org/api/0.6/relation/6332283/full",
+      "https://api.openstreetmap.org/api/0.6/relation/6424952/full",
+      "https://api.openstreetmap.org/api/0.6/relation/2871713/full",
+      "https://geoservices.bayern.de/bvvapi/od/hoehen/v1/elevation/list"
+    ],
+    "sha256": "6e1416dd5d2686bd2eceafe6acc73149ef8959d01867e0c851b2db83349d761d",
+    "point_count": 185,
+    "distance_metres": 7385.4,
+    "closed_loop": true,
+    "elevation_available": true,
+    "elevation_min_m": 534.2,
+    "elevation_max_m": 554.7,
+    "elevation_source": "Bayerische Vermessungsverwaltung (DGM1), DHHN2016",
+    "elevation_license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "retrieved_at": "2026-11-09T20:46:18+00:00",
+    "outdoor_navigation_verified": false
+  },
+  {
+    "id": "ammersee-runde",
+    "name": "Rund um den Ammersee",
+    "file": "ammersee-runde.json",
+    "description": "Seeumrundung aus OSM-Radwegen mit kartierter Verbindung bei Fischen.",
+    "source": "openstreetmap",
+    "attribution": "© OpenStreetMap contributors (ODbL); Geobasisdaten: Bayerische Vermessungsverwaltung – www.geodaten.bayern.de (Daten verändert), CC BY 4.0",
+    "license_url": "https://opendatacommons.org/licenses/odbl/1-0/",
+    "source_urls": [
+      "https://api.openstreetmap.org/api/0.6/relation/551290/full",
+      "https://api.openstreetmap.org/api/0.6/map?bbox=11.147,47.944,11.153,47.949",
+      "https://geoservices.bayern.de/bvvapi/od/hoehen/v1/elevation/list"
+    ],
+    "sha256": "21afc7a8e2cf50115f394f719925d5899e94c43a6cda0de57c799de84198fd89",
+    "point_count": 1628,
+    "distance_metres": 45997.2,
+    "closed_loop": true,
+    "elevation_available": true,
+    "elevation_min_m": 533.0,
+    "elevation_max_m": 606.7,
+    "elevation_source": "Bayerische Vermessungsverwaltung (DGM1), DHHN2016",
+    "elevation_license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "retrieved_at": "2026-11-09T20:46:18+00:00",
+    "outdoor_navigation_verified": false
+  }
+]

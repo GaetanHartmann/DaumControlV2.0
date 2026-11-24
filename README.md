@@ -1,6 +1,6 @@
-# DaumControlV2.0 — DAUM Studio
+# Fitness-Cockpit
 
-Lokale Trainings-App für den **Daum Premium 8i** und einen **Raspberry Pi 3 B+**. Das Bike verbindet sich per direktem LAN mit dem Pi; bedient wird es am Touchdisplay oder im Browser über WLAN. Die Oberfläche trägt den Namen DAUM Studio.
+Lokales, erweiterbares Trainingscockpit mit bestehender Anbindung an den **Daum Premium 8i** und einen **Raspberry Pi 3 B+**. Das Bike verbindet sich per direktem LAN mit dem Pi; bedient wird es am Touchdisplay oder im Browser über WLAN. Fitness-Cockpit ist der vorläufige Produktname und über `FITNESS_PRODUCT_NAME` anpassbar. Repository- und Dienstnamen bleiben für vorhandene Installationen kompatibel.
 
 Version **2.0.0** · [MIT-Lizenz](LICENSE) · [Release Notes](RELEASE_NOTES.md)
 
@@ -13,6 +13,10 @@ Version **2.0.0** · [MIT-Lizenz](LICENSE) · [Release Notes](RELEASE_NOTES.md)
 - Aktivitäten mit TCX-, CSV- und JSON-Export sowie Löschen einzelner Fahrten.
 - Optionales Herunterfahren nach fünf Minuten ohne Daum-LAN; Schalter in der App und auf dem Pi-Desktop.
 - Demo-Modus und experimentelle Zwift-FTMS-Anbindung über Bluetooth.
+- Kompakte Trainingswerte mit Quellenangaben, schaltbare Watt-/Pulswerte am Zeitmarker und gespeicherte Abschlussauswertung.
+- Trainingsgenerator, persönlicher Trainingsplan, optionale Kraftblöcke und manuelle Laufbanderfassung.
+- Herstellerunabhängiger Connector-Vertrag; Apple-/mobile Sensorbrücken liegen als gesonderte, noch nicht am Gerät geprüfte Spikes vor.
+- Eigenständiger Trainingskatalog, dauerhafte Live-Wattanpassung mit Rückkehr zum aktuellen Plan und lokaler/optional externer Trainingscoach.
 
 ## Dokumentation
 
@@ -23,6 +27,9 @@ Version **2.0.0** · [MIT-Lizenz](LICENSE) · [Release Notes](RELEASE_NOTES.md)
 | Training, Profile, Export und Abschaltautomatik | [Bedienung](docs/USER_GUIDE.md) |
 | Tests und optionale Garmin-Validierung | [Tests](docs/TESTING.md) |
 | Backend, Daten und Dienste | [Architektur](docs/ARCHITECTURE.md) |
+| Generator, Auswertung, persönlicher Plan und Laufband | [Fitness-Cockpit](docs/FITNESS_COCKPIT.md) |
+| Änderungspaket, Tests und verbleibende Hardwareabnahme | [Umsetzungsstand](docs/change-requests/implementation-status.md) |
+| Trainingskatalog, manuelle Live-Wattsteuerung und Coach | [P0/P1-Umsetzung](docs/change-requests/p0-p1-implementation-2026-11-09.md) |
 | Ausführliche Protokoll- und Trainingshinweise | [Technische Dokumentation](bike/README.md) |
 | Abhängigkeiten und Fremdmaterial | [Lizenzhinweise](THIRD_PARTY_NOTICES.md) |
 

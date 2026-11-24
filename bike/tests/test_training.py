@@ -200,6 +200,8 @@ def test_subjective_calibration_saves_only_comfortable_load(client):
     engine.daum.release=AsyncMock()
     engine.step_index,engine.step_remaining=2,60
     engine.cadence,engine.power,engine.target=70,50,50
+    engine.applied_target_watts=50
+    engine.target_confirmation_detail='echoed_value'
     assert client.post('/api/calibration/comfortable').status_code==200
     values=client.get('/api/profile').json()
     assert values['comfortable_watts']==50

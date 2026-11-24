@@ -22,7 +22,9 @@ def test_power_validation_and_plan_ownership(client):
     assert client.post('/api/power', json={'watts':130}).json()['target'] == 130
     plan = client.get('/api/plans').json()[0]
     assert client.post('/api/start', json={'plan_id':plan['id']}).status_code == 200
-    assert client.post('/api/power', json={'watts':150}).status_code == 409
+    override = client.post('/api/power', json={'watts':150})
+    assert override.status_code == 200
+    assert override.json()['control_mode'] == 'manual_override'
     assert client.post('/api/mode', json={'mode':'daum'}).status_code == 409
     assert client.post('/api/start', json={}).status_code == 409
 
@@ -186,8 +188,9 @@ def test_connection_changes_reject_stale_user_and_active_training(client, monkey
     connect.assert_not_awaited()
     client.post('/api/start', json={})
     assert client.post('/api/connect/all', json={}).status_code == 409
-    assert client.post('/api/hr/connect', json={'address': 'strap'}).status_code == 409
-    assert client.post('/api/hr/disconnect', json={}).status_code == 409
+    assert client.post('/api/hr/connect', json={'address': 'strap'}).status_code == 200
+    assert main.engine.running
+    assert client.post('/api/hr/disconnect', json={}).status_code == 200
     client.post('/api/pause')
     assert client.post('/api/hr/connect', json={'address': 'strap'}).status_code == 200
 

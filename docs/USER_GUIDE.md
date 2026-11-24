@@ -12,11 +12,13 @@ Ohne FTP verwenden relative Vorlagen die ausdrücklich gekennzeichnete Beispielb
 
 ## Watt oder Puls
 
-„Wattgeführt“ fährt die angezeigten Wattstufen. Im freien Training lässt sich die Zielleistung manuell verändern. Bei laufendem Plan ist die manuelle Wattbedienung gesperrt.
+„Wattgeführt“ folgt den angezeigten Wattstufen. Während eines laufenden Plans ändern Schieberegler und ±10-W-Tasten den absoluten Sollwert, ohne die Fahrt zurückzusetzen. „Manuell angepasst“ bleibt über Stufenwechsel aktiv. „Zurück zum Trainingsplan“ übernimmt den für die aktuelle Position gültigen Planwert.
 
 „Pulsgeführt“ benötigt persönliche HFmax, Pulsgrenze und ein frisches Signal vom verbundenen BLE-Pulssensor. Die Regelung reagiert auf den Puls und kann daher von der geplanten Wattkurve abweichen. „Ohne Pulsgurt starten · Watttraining“ wechselt bewusst in den Wattmodus. Fehlende FTP ist auch dabei kein Startblocker.
 
 ## Zeitachse
+
+„⛶ Zeitachse“ öffnet das Diagramm als eigene Vollbildansicht. „⛶ Kennzahlen“ öffnet eine separate Übersicht mit allen 17 Live- und Statusfeldern. Oben zwischen den Ansichten wechseln; „Schließen“ oder Escape führt zurück. Pause/Fortsetzen und Stopp bleiben während einer Fahrt oben erreichbar. „Wattsteuerung“ klappt die vorhandenen Leistungsregler auf. Das Öffnen oder Wechseln der Ansicht verändert keine Trainingswerte und sendet keinen Gerätebefehl. Fehlende oder nicht nachgewiesene Messwerte bleiben als `—` gekennzeichnet.
 
 Unter „Zeitraster“ Automatisch, 30 Sekunden oder 1/2/5/10 Minuten wählen. Das Wattraster bietet Automatisch und 25/50/100 W. Die Auswahl bleibt pro Browser erhalten. Die Zeitachse zeigt geplante Wattwerte, angelegtes Ziel, Ist-Leistung und die aktuelle Zeitposition.
 
@@ -34,6 +36,8 @@ Im Planfilter „Berg & Tal“ wählen. Die Wattkurven bauen Last allmählich au
 
 ## Profile und Aktivitäten
 
+Unter „Strecken“ stehen Grafrath–Ampermoos (7,4 km) und eine Ammerseerunde (46,0 km) mit OSM-Koordinaten und amtlichen Bayerischen Geländehöhen offline zur Auswahl. Anklicken zeigt die 2D-Geometrie und das Höhenprofil; „Als eigene Strecke übernehmen“ speichert eine persönliche Kopie. Die Vorschau verändert keine Wattvorgabe. Quellen und Lizenzen werden angezeigt. Eine 3D-Fahrt ist noch offen. Details: [Streckendaten](research/route-data-2026-11-09.md).
+
 Profile speichern Namen, optionale FTP und Pulswerte sowie Leistungsanpassung von −100 bis +100 W. Die aktiven Werte gelten gemeinsam auf allen Bediengeräten am Bike. Während einer Fahrt ist der Benutzerwechsel gesperrt.
 
 Unter „Aktivitäten“ stehen beendete Fahrten des aktiven Benutzers. TCX, CSV und JSON enthalten die vorhandenen Messwerte. Mit „Löschen“ und anschließender Bestätigung wird eine Fahrt samt Messspur dauerhaft entfernt; Abbrechen lässt sie bestehen. Demo-Fahrten und -Exporte sind gekennzeichnet.
@@ -45,3 +49,10 @@ App → Einstellungen → „Automatisch abschalten“ zeigt den Status. Ein Kli
 Bei eingeschalteter Automatik folgen nach fünf Minuten ohne direkten Daum-LAN-Link: laufende Fahrt beenden und speichern, danach Pi herunterfahren. Wiederverbindung vor Ablauf setzt die Wartezeit zurück. Nach dem Herunterfahren startet der Pi durch erneutes Anschließen des Netzteils; Daum-Einschalten allein reicht ohne Zusatzhardware nicht.
 
 Der schwarze Bildschirmschoner ist unabhängig davon. Touch oder Tastatur holt das Bild zurück; eine laufende Fahrt bleibt aktiv.
+
+
+Während einer Fahrt kann der BLE-Pulsgurt im Pulsdialog gesucht und verbunden werden. Nach einem Verbindungsabbruch versucht die App den zuletzt verbundenen Gurt alle fünf Sekunden erneut zu verbinden; bewusstes Trennen beendet diese Versuche. Ein pausiertes pulsgesteuertes Training wird dadurch nicht automatisch fortgesetzt.
+
+Bei wattgeführten Stufenplänen verschieben Slider und ±10 W die gesamte Kurve um die Differenz zur aktuellen Planstufe. Jede Stufe wird auf die eingestellten Geräte- und Nutzergrenzen begrenzt. Der Originalplan bleibt erhalten; „Zurück zum Trainingsplan“ entfernt die Verschiebung. Im freien Training und bei Pulssteuerung bleibt die manuelle Vorgabe ein absoluter Wattwert.
+
+Der zuletzt ausgewählte Benutzer bleibt auf dem gemeinsamen Cockpit gespeichert und wird auch nach einem Neustart wieder geladen. Im Vorabcheck ist der aktive Benutzer sichtbar; ein Training startet erst nach deinem Start-Klick.

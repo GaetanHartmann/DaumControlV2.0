@@ -16,3 +16,4 @@ dist/
 /os-catalog.json
 /bike/*.png
 /bike/tests/fixtures/TrainingCenterDatabasev2.xsd
+/.cache/

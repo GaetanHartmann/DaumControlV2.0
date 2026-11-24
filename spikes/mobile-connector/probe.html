@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fitness-Cockpit: Sensor-Spike</title>
+<style>body{max-width:50rem;margin:2rem auto;padding:1rem;font:1rem system-ui;line-height:1.6}button{padding:1rem;margin:.5rem}pre{white-space:pre-wrap;overflow-wrap:anywhere}output{display:block;font-size:1.5rem}</style>
+<h1>Mobiler Sensor-Spike</h1>
+<p>Lokale BLE-Leseprüfung für Heart Rate oder FTMS. Kein Training wird gestartet, keine Geräte-Steuerung geschrieben und keine Messung hochgeladen.</p>
+<button id="connect">Sensor auswählen</button><button id="disconnect">Trennen</button>
+<output id="pulse">Puls nicht verfügbar</output><pre id="status" role="status"></pre>
+<script type="module">
+let device, latest=0;
+const status=document.querySelector('#status'), pulse=document.querySelector('#pulse');
+const note=text=>{status.textContent=(text+'\n'+status.textContent).slice(0,8000)};
+if(!window.isSecureContext||!navigator.bluetooth) note('Dieser Browser stellt hier kein Web Bluetooth bereit. HTTPS und unterstützten Browser verwenden; manuelle Erfassung bleibt möglich.');
+document.querySelector('#connect').onclick=async()=>{
+ try{
+  if(!navigator.bluetooth)throw Error('Web Bluetooth nicht verfügbar');
+  device?.gatt?.disconnect();
+  device=await navigator.bluetooth.requestDevice({filters:[{services:['heart_rate']},{services:['fitness_machine']}],optionalServices:['heart_rate','fitness_machine']});
+  device.addEventListener('gattserverdisconnected',()=>{latest=0;pulse.textContent='Puls nicht verfügbar';note('Sensor getrennt')});
+  const server=await device.gatt.connect();
+  for(const service of await server.getPrimaryServices()){
+   for(const characteristic of await service.getCharacteristics()){
+    if(!characteristic.properties.notify&&!characteristic.properties.indicate)continue;
+    await characteristic.startNotifications();
+    characteristic.addEventListener('characteristicvaluechanged',event=>{
+     const value=event.target.value;
+     if(characteristic.uuid==='00002a37-0000-1000-8000-00805f9b34fb'&&value.byteLength>=2){
+      const long=(value.getUint8(0)&1)!==0;
+      if(long&&value.byteLength<3)return;
+      const bpm=long?value.getUint16(1,true):value.getUint8(1);
+      if(bpm>=20&&bpm<=250){latest=Date.now();pulse.textContent=bpm+' bpm · BLE Heart Rate'}
+     }else{
+      note('FTMS/Notification '+characteristic.uuid+': '+[...new Uint8Array(value.buffer,value.byteOffset,value.byteLength)].map(v=>v.toString(16).padStart(2,'0')).join(' '));
+     }
+    });
+    note('Lese-Notification aktiv: '+characteristic.uuid);
+   }
+  }
+ }catch(error){note(error.message)}
+};
+document.querySelector('#disconnect').onclick=()=>device?.gatt?.disconnect();
+setInterval(()=>{if(Date.now()-latest>10000)pulse.textContent='Puls nicht verfügbar'},1000);
+</script></html>

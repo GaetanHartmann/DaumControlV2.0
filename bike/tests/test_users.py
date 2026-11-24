@@ -66,7 +66,14 @@ def test_active_user_and_values_survive_restart(client, monkeypatch):
     monkeypatch.setattr(main, 'engine', main.Engine())
     with TestClient(main.app) as restarted:
         assert restarted.get('/api/users').json()['active_user_id'] == user_id
+        assert restarted.get('/api/session').json()['active_user_id'] == user_id
         assert restarted.get('/api/profile').json()['ftp_watts'] == 175
+        started = restarted.post('/api/start', json={'expected_user_id': user_id})
+        assert started.status_code == 200
+        assert started.json()['user_id'] == user_id and started.json()['running']
+        main.engine.elapsed = 10
+        assert restarted.post('/api/stop').status_code == 200
+        assert len(restarted.get('/api/rides').json()) == 1
 
 
 def test_legacy_migration_preserves_values_and_rides(tmp_path, monkeypatch):

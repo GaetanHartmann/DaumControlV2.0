@@ -61,3 +61,63 @@ Der Timeline-Prüfer startet und löscht eine kurze Demo-Fahrt. Der Profil-Prüf
 - Bereitgestelltes Pi-Frontend und Desktop-Umschaltung separat geprüft.
 
 Automatisches reales Ausschalten, eine vollständige pulsgeführte Fahrt und Training in der Zwift-App wurden in dieser Prüfung nicht erzwungen. Diese Prüfungen ersetzen keinen Praxistest am eigenen Gerät.
+
+## Fitness-Cockpit-Erweiterungen, 2026-11-09
+
+- Windows: 107 Backend-/Deployment-/Spike-Tests bestanden; bestehende httpx-Deprecation-Warnung.
+- Vite-Produktionsbuild und zusätzlicher TypeScript-Typcheck bestanden.
+- Bestehende Browserprüfungen für Timeline und persönliche Wattprofile bestanden.
+- Neuer Browserablauf: Generatorvorschau/Speichern, persönliche Profilfelder, Planer/Kraftmodul einschließlich Bearbeitung/Fortschritt, manuelle Laufdaten, fehlende Werte/Exporte, persistente Markerschalter sowie regulärer Abschluss einer tatsächlichen zehnsekündigen Demo-Einheit.
+- Alle sechs Messkacheln bei aktivem Training ohne Scrollen im Viewport: 800 × 480 und 1024 × 768; 390 × 844 ohne horizontalen Seitenüberlauf. Smartphone darf vertikal scrollen. Keine JavaScript-Laufzeitfehler in den geprüften Abläufen.
+
+Der neue Test startet mit `--serve` selbst einen temporären Demo-Server und beendet ihn anschließend. Er verweigert fremde Hosts und die Wiederverwendung einer laufenden Installation:
+
+```powershell
+$env:BIKE_TEST_URL = 'http://127.0.0.1:8027'
+.venv\Scripts\python tests/browser_cockpit_check.py --serve
+frontend\node_modules\.bin\tsc.cmd --noEmit --target ES2022 --module ESNext --moduleResolution bundler --skipLibCheck --allowSyntheticDefaultImports frontend/src/main.ts frontend/src/training-ui.ts frontend/src/cockpit-features.ts
+```
+
+Screenshots werden ins temporäre Betriebssystemverzeichnis geschrieben. Reale Pulsgurt-, Boot-/Poweroff- und Apple-Gerätetests bleiben getrennt; ihr Stand steht im [Umsetzungsbericht](change-requests/implementation-status.md).
+
+## Trainingskatalog, Coach und laufende Wattsteuerung
+
+Der anschließende P0/P1-Auftrag erweitert die Suite auf **165 bestandene Tests**.
+Neu sind unter anderem dauerhafter manueller Override, Segmentwechsel/Rückkehr,
+Pausenvorbereitung, neueste Vorgabe bei laufendem Modus-ACK, Stoppriorität,
+Sitzungswechsel, Nutzer-/Gerätegrenzen und fehlende Bestätigung. Katalog-/Coachtests
+prüfen Revisionen, Benutzerzuordnung, erneute Validierung nach Änderungen,
+Einwilligung und manipulierte/nicht endliche KI-Ausgaben.
+
+Zusätzlich zum bisherigen Cockpit-Prüfer laufen diese isolierten Browserprüfungen:
+
+```powershell
+.venv\Scripts\python tests/browser_catalog_coach_check.py --serve
+.venv\Scripts\python tests/browser_live_power_check.py --serve
+.venv\Scripts\python tests/browser_routes_check.py
+```
+
+Alle drei starten ausschließlich eigene temporäre Loopback-Server. Es werden keine
+realen Geräte verbunden und keine Daten an einen externen Coach übertragen. Der
+Streckenprüfer importiert ausdrücklich eine Testgeometrie; er ist kein Nachweis
+einer geografisch geprüften Straßenroute oder eines 3D-Renderers.
+
+`tests/pi_power_control_smoke.py` ist **kein** automatisch ausgeführter Test. Sein
+Standardmodus liest nur Zustand und zeigt die beabsichtigten Befehle. Das Flag
+`--execute-idle-bike` setzt eine ausdrückliche Freigabe für ein stillstehendes,
+unbenutztes Gerät voraus. Es prüft echte Adapter-ACKs bei 25/35/25 W und danach lokale
+Kontrollfreigabe; es legt keine Trainingsdaten an. Eine Protokollbestätigung wird
+nicht als Nachweis tatsächlicher Leistung beim Treten bezeichnet.
+
+Aktueller [Übergabe-/Abnahmestand](change-requests/p0-p1-implementation-2026-11-09.md).
+
+Ergänzung vom 09.11.: [Getrennte Vollbildansichten und echte Offline-Strecken](change-requests/fullscreen-and-route-material-2026-11-09.md). Aktuell 208 Windows-Tests und 205 Pi-Tests bestanden (ein optionaler Pi-Skip); fünf separate Downloader-Tests bestanden. `browser_fullscreen_check.py --serve` prüft zwei Ansichten, native Fullscreen-API und CSS-Fallback, Fehleranzeige und vier Displaygrößen. `browser_routes_check.py` prüft zusätzlich die echte Offline-Bibliothek, amtliche Höhen und explizite persönliche Übernahme, ohne Gerätebefehle.
+
+Nach dem realen Niedriglasttest kamen Echo-/Provenienzkorrekturen hinzu:
+**195 Windows-Tests bestanden; 192 Pi-Tests bestanden, ein optionaler Skip**.
+Unverifizierte Daum-Wattwerte werden weder als Istleistung integriert noch als
+bekannte Messwerte per Bluetooth gesendet. Archivierte Rohwerte bleiben erhalten.
+`browser_power_quality_check.py --serve` prüft diesen Anzeigekontrakt mit einem
+synthetischen WebSocket; das Backend bleibt dabei ohne jeden Steuer-POST im Demo-
+Leerlauf. Der ausdrücklich freigegebene reale 25/35/25-W-Test mit numerischem Echo
+und anschließendem lesendem S20-Freigabenachweis steht separat in der Übergabe.

@@ -1,4 +1,4 @@
-# DAUM Studio
+# Fitness-Cockpit
 
 Lokale Bike-Web-App für GHAPI3 (Raspberry Pi 3 B+, aarch64), entwickelt unter Windows.
 
@@ -18,11 +18,13 @@ Weboberfläche: http://ghapi3.local:8000. API-Dokumentation: `/docs`. SQLite spe
 
 ## Funktionen und Grenzen
 
+Neu am 09.11.: getrennte Vollbildansichten für **Zeitachse** und **alle Kennzahlen**, erreichbar über die beiden ⛶-Knöpfe im Training. Pause/Stopp bleiben sichtbar, Wattregler lassen sich aufklappen. Unter **Strecken** stehen zwei offline geladene OSM-Runden mit amtlichen Höhen bereit. [Bedienung](../docs/USER_GUIDE.md), [Vollbilddetails](../docs/research/fullscreen-cockpit.md), [Streckendaten und Lizenzen](../docs/research/route-data-2026-11-09.md).
+
 - Wattsteuerung 25–400 W (bewusst konservative App-Grenze), freie Trainings und zeitbasierte Trainingspläne. Pause und Stopp setzen bei echtem Bike 25 W und Stopp gibt anschließend die Steuerung ans Cockpit zurück. Ein Verbindungsabbruch kann nicht garantieren, dass das Bike einen Stopp empfängt: am Cockpit bedienbar halten.
 - Standard ist **Demo**. Leistung, Kadenz und Geschwindigkeit sind dabei simuliert und entsprechend gekennzeichnet. Kein künstlicher Puls.
 - Daum-Premium-TCP-Adapter mit V00-Prüfung, S20/S23-Steuerung, X70-Livewerten, Prüfsummen, Bestätigungen und Zeitlimits. Gegen Mock-TCP getestet, echter 8i-Test steht aus. Erfordert Pi-LAN 192.168.10.2/24, Bike 192.168.10.1/24, Fernsteuerung EIN, Bedienung sperren AUS, Automatisch, Standardprotokoll, Port 51955. WLAN behält die Standardroute; LAN braucht kein Gateway.
 - Garmin: BLE Heart Rate Service über Bleak. Suche und Verbindung laufen auf dem Server/Pi. Nur Gurte mit Bluetooth, nicht reine ANT+-Gurte. Livewerte verfallen nach 10 Sekunden ohne Signal. Physischer Garmin-Test steht aus.
-- **Zwift FTMS (Testversion)**: Direkter BlueZ-GATT-Server über dbus-next, unabhängig von Bleak. Dienste: Fitness Machine, Cycling Power, Heart Rate. BLE-Sender zuerst starten, dann Zwift-Steuerung explizit freigeben. In Zwift `DAUM Studio` als Leistungsquelle und steuerbaren Trainer wählen. ERG-Vorgaben 25–400 W, SIM-Road-Load-Modell mit Fahrer-/Radgewicht, Wind, Steigung, Crr und Cw. Leistungsänderungen maximal 25 W/s. Nur ein BLE-Gerät darf steuern; lokale Pläne und Wattbedienung sind während der Freigabe gesperrt. Lokaler Stopp, Verbindungsabbruch und fehlende Indikationsbestätigung stoppen das Training und entziehen die Freigabe. BLE-Wiederverbindung startet kein Training automatisch. Noch keine Bluetooth-Zertifizierung oder praktische Prüfung in Zwift.
+- **Zwift FTMS (Testversion)**: Direkter BlueZ-GATT-Server über dbus-next, unabhängig von Bleak. Dienste: Fitness Machine, Cycling Power, Heart Rate. BLE-Sender zuerst starten, dann Zwift-Steuerung explizit freigeben. In Zwift `Fitness-Cockpit` als Leistungsquelle und steuerbaren Trainer wählen. ERG-Vorgaben 25–400 W, SIM-Road-Load-Modell mit Fahrer-/Radgewicht, Wind, Steigung, Crr und Cw. Leistungsänderungen maximal 25 W/s. Nur ein BLE-Gerät darf steuern; lokale Pläne und Wattbedienung sind während der Freigabe gesperrt. Lokaler Stopp, Verbindungsabbruch und fehlende Indikationsbestätigung stoppen das Training und entziehen die Freigabe. BLE-Wiederverbindung startet kein Training automatisch. Noch keine Bluetooth-Zertifizierung oder praktische Prüfung in Zwift.
 - Mobil/Touch: responsive Vue-Oberfläche, WebSocket-Livewerte, lokale SVG-Radanimation. Fonts optional von Google; Systemfonts funktionieren offline.
 - Für das eigene, vertrauenswürdige Heimnetz vorgesehen. Keine Internetfreigabe eingerichtet. Kein Login implementiert.
 
@@ -75,7 +77,7 @@ Trainings- und FTMS-Backend-Tests auf Windows und ARM64-Pi bestanden. Tatsächli
 1. Daum verbinden (oder bewusst die Demo benutzen).
 2. Verbindungen → Zwift Connect → BLE-Sender starten.
 3. Fahrer- und Radgewicht eintragen; Zwift-Steuerung freigeben.
-4. In Zwift DAUM Studio sowohl als Leistungsquelle als auch als steuerbaren Trainer wählen; optional Kadenz und Herzfrequenz.
+4. In Zwift Fitness-Cockpit sowohl als Leistungsquelle als auch als steuerbaren Trainer wählen; optional Kadenz und Herzfrequenz.
 5. Training in Zwift starten. ERG und SIM werden anhand der empfangenen FTMS-Befehle umgeschaltet. Lokales Stoppen entzieht sofort die Freigabe; nach einem Abbruch erneut freigeben.
 
 ```powershell

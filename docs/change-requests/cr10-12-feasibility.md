@@ -1,0 +1,49 @@
+# CR-10 bis CR-12: Geräte- und Apple-Spikes
+
+Stand: 2026-11-09. Primärquellen wurden an diesem Tag recherchiert. Dies sind vorbereitete Spikes mit Quellen und Testartefakten, keine bestätigte Taurus-/Apple-Geräteintegration und keine App-Veröffentlichung.
+
+## CR-10: Taurus und mobiler Sensor
+
+**Entscheidung:** Das unbekannte ältere Taurus-Modell zunächst über manuelle Erfassung unterstützen. Erst das Typenschild und die tatsächlichen Anschlüsse erlauben die Auswahl eines direkten Adapters. Preis, Gewicht, Konsolenfarbe und erinnerte Höchstwerte reichen nicht zur Modellidentifikation. Keine Steuerung von Geschwindigkeit/Steigung vorsehen.
+
+NPE Runn ist ein möglicher externer Messsensor. Laut Hersteller überträgt er Geschwindigkeit, Steigung und Kadenz; das Handbuch nennt FTMS für die Bluetooth-Übertragung. Für die Montage sind eine geeignete freie Fläche und ein Abstand des optischen Sensors von etwa 0,6–1,2 cm zum Band vorgesehen. Die tatsächliche Montage am Taurus ist ungeprüft. Herstelleraussagen ersetzen keinen Nachweis am eigenen Gerät. [NPE-FAQ](https://support.npe.fit/hc/en-us/articles/360037484811-Runn-FAQs), [NPE-Handbuch](https://support.npe.fit/hc/en-us/articles/360037195332-Runn-User-Guide)
+
+Der Hersteller-Shop zeigte bei der Recherche 124,99 USD; EU-Endpreis, Versand, Einfuhr und lokaler Händlerpreis sind offen. Vor Beschaffung erneut prüfen. [NPE-Shop](https://npe.fit/products/runn)
+
+**Browser zuerst:** Die Implementierungsübersicht des Web-Bluetooth-Projekts nennt GATT-Unterstützung in Chrome auf Windows/Android und Edge; Safari/iOS besitzt keine native entsprechende Implementierung. Erweiterungen oder besondere iOS-Browser sind zusätzliche native Brücken. Linux-Unterstützung und reale Zielversionen müssen gezielt geprüft werden. Die Weboberfläche des Cockpits benötigt weiterhin keine Smartphone-App; der vorhandene Pi-BLE-Pulsgurtpfad bleibt unabhängig. [Web-Bluetooth-Implementierungsstatus](https://github.com/whatwg/bluetooth/blob/main/implementation-status.md)
+
+**Testartefakt:** `spikes/mobile-connector/probe.html` prüft API-Verfügbarkeit, fordert per Nutzerklick einen Heart-Rate-/FTMS-Sensor an und zeigt verfügbare Notifications. Standardpuls wird decodiert; unbekannte FTMS-Pakete bleiben als Rohdaten erkennbar. Es werden keine Gerätebefehle geschrieben und keine Daten an die Produktdatenbank gesendet. Über HTTPS in einem unterstützten Browser öffnen; lokale Dateiansichten sind keine verbindliche Plattformabnahme.
+
+**Abnahmeliste:** Modell/Anschlüsse dokumentieren; Sensor ohne Bewegung sicher montieren; optische Erkennung und Kalibrierung nach Herstellerverfahren; Vergleich bei mehreren Geschwindigkeiten und Neigungen; Verhalten beim Gehen sowie Laufvibrationen; Funkabbruch; Quellkennzeichnung; gemeinsame Benutzerhistorie und manuelle Erfassung ohne Sensor. Mobil-Uplink erst mit gepaarter Identität, TLS, widerrufbarer Berechtigung, Zeit-/Sequenzprüfung und eindeutigem aktivem Benutzer implementieren. Kein öffentlicher ungeschützter Sensor-Endpunkt.
+
+**Aufwandsschätzung:** Modell-/Montageprüfung etwa 0,5–1 Tag; BLE-Erfassung und Kalibrierungsnachweis 1–3 Tage bei vorhandenem Sensor; robuster mobiler Produktconnector zusätzlich 3–6 Tage nach Festlegung von Authentifizierung und Zielplattformen. Schätzungen, keine Zusage ohne Hardwareprüfung.
+
+## CR-11: Watch-Livepuls und HealthKit
+
+**Architektur:** Aktives Workout auf Apple Watch erfasst Herzfrequenz über HealthKit/`HKLiveWorkoutBuilder`; die native Begleitkomponente überträgt frische Messungen mit Quelle und Zeitstempel. Apple dokumentiert Hintergrundausführung für aktive Workout-Sessions, aber auch mögliche Suspendierung bei zu hoher CPU-Last. iPhone-Zustand und gewählter Übertragungspfad müssen real gemessen werden. [Workout-Sessions](https://developer.apple.com/documentation/healthkit/running-workout-sessions), [Multidevice-Sample](https://developer.apple.com/documentation/healthkit/building-a-multidevice-workout-app)
+
+**Vorbereiteter Prototyp:** `spikes/apple-bridge/watchOS` enthält aktive Indoor-Cycling-Workout-Erfassung und WatchConnectivity-Übertragung an die iPhone-Komponente. Kein späterer Replay veralteter Werte. Die iPhone-Komponente kann auch den Standard-BLE-Pulsgurt lesen; die Zuordnung beider Quellen wird im Spike sichtbar angezeigt. Im Produkt muss der Nutzer die maßgebliche Pulsquelle explizit auswählen. Der Spike verwendet `sendMessage` nur bei Erreichbarkeit; stabile gesperrte iPhone-/Hintergrundausführung wird damit nicht behauptet. Für die Produktentscheidung Apples Workout-Mirroring-Sample auf realer Hardware dagegen testen. [WatchConnectivity-Nachrichten](https://developer.apple.com/documentation/watchconnectivity/wcsession/sendmessage(_:replyhandler:errorhandler:))
+
+Der Watch-Prototyp verwirft sein Workout beim Ende bewusst, um keine doppelte Aktivität neben dem Cockpit zu speichern. Optionales Health-Schreiben ist ein eigener späterer Einwilligungsfluss. Health-Leseberechtigung, Workout-Schreibberechtigung und Berechtigung zum Versand an das Backend getrennt erklären. Eine erfolgreiche HealthKit-Berechtigungsanfrage beweist aus Datenschutzgründen nicht, dass alle angefragten Lesedaten verfügbar sind; leere Werte bleiben »nicht verfügbar«.
+
+**Testprotokoll noch auszuführen:** Modell, OS, Build und Netz dokumentieren. Pro Szenario mindestens 15 Minuten Messungen: iPhone entsperrt/gesperrt, App im Vorder-/Hintergrund, Handgelenk gesenkt, WLAN-Wechsel, Bluetooth-Unterbrechung, pausiertes Workout, konkurrierendes Workout und Widerruf. Für jede Strecke Watch→iPhone→Empfänger Sequenz, Sensorzeit, Empfangszeit, Uhrenabweichung, p50/p95-Latenz, Anteil frischer Werte und längsten Ausfall auswerten. Ein gewähltes Ziel (z. B. p95 unter 3 s im Heim-WLAN) ist eine Abnahmeanforderung, noch kein Messergebnis. Alte Werte spätestens nach 10 s verwerfen; Produkt-Pulsregelung behält ihre strengere bestehende Frischegrenze.
+
+**Ergebnis heute:** Datenformat-/Empfängerprüfungen vorhanden; kein Apple-Build und kein realer Watch-/iPhone-Latenztest auf dem Windows-Rechner möglich. Stabilität bei gesperrtem iPhone bleibt offen. Keine direkte Browserabfrage von Live-Watch-Puls vorausgesetzt.
+
+**Aufwandsschätzung:** Gerätelauffähiger Spike samt Entitlements/Signing 2–4 Tage; Hintergrund-/Abbruchmatrix und Entscheidung weitere 2–3 Tage, bei vorhandenen Geräten und Entwicklerzugang.
+
+## CR-12: optionale native Erweiterung
+
+**Architekturentscheidung für die nächste Prüfung:** Kleine native Sensor-/Watch-Brücke plus bestehendes Browsercockpit. Trainingsplan, Auswertung, Historie und Datenbank bleiben im Backend. Eine reine WKWebView-Hülle bietet keine Lösung für Sensor-/HealthKit-Funktionen und birgt zusätzlichen Pflegeaufwand ohne eigenen Nutzen. Eine vollständige doppelte Trainingsimplementierung wird nicht angelegt. Die Spike-Apps enthalten nur Erfassung/Transport/Status.
+
+Unter `spikes/apple-bridge` liegen ein Swift-Paket für Nachrichten/Parser samt Unit-Tests, iOS-/watchOS-Quellen und ein separater Python-HTTPS-Testempfänger. Der Testempfänger nutzt ein temporäres Bearer-Token, akzeptiert nur frische valide Werte, verwirft Duplikate und hält Werte nur im Speicher. Er besitzt keinen Zugriff auf die Produktdatenbank und authentifiziert keinen Produktbenutzer. Das ist ein Transport-Spike, keine eingeführte Produktanmeldung. Die bestehende API darf erst nach Authentifizierungs-/Kopplungsentscheidung Sensordaten von nativen Clients entgegennehmen.
+
+**Buildweg:** Git/VS Code unter Windows für Quellen; macOS mit passendem Xcode für App-/Watch-Targets, Capability-Prüfung, Simulator und Signing. Die README im Spike enthält konkrete Target-/Capability-Schritte. CI zunächst ohne Secrets auf einem macOS-Runner für Swift-Pakettests und später Simulatorbuilds; reale BLE-/Watch-Abnahme separat. Build-Signing/Distribution erst nach festgelegter Team-/Bundle-ID und Apple-Entwicklerzugang. TestFlight benötigt passende App-Store-Connect-Einträge und Rollen. [Xcode-Distribution](https://help.apple.com/xcode/mac/current/en.lproj/devac02c5ab8.html), [Xcode-Cloud/TestFlight](https://developer.apple.com/documentation/xcode/distributing-your-xcode-cloud-builds-through-testflight)
+
+**Berechtigungen/Datenschutz:** Je Target klare Zwecktexte, nur benötigte Health-Typen, Watch-Workout-Background-Mode, BLE-Zugriff auf iPhone und bei lokalem HTTPS-Ziel Netzwerkzwecktext. Keine pauschalen ATS-Ausnahmen, keine Tokens im Git; produktiv Keychain und widerrufbare Kopplung. Health-Messwerte nicht in Diagnose-/Analyticslogs. Aufbewahrung, Löschen, Export und Einwilligungswiderruf vor Produktbetrieb definieren. [Watch-Hintergrundmodus](https://developer.apple.com/documentation/bundleresources/information-property-list/wkbackgroundmodes), [lokales Netzwerk](https://developer.apple.com/documentation/bundleresources/information-property-list/nslocalnetworkusagedescription)
+
+Für eine Veröffentlichung sind unter anderem Vollständigkeit, aussagekräftige Datenschutzangaben und die besonderen Regeln für Gesundheitsdaten zu beachten; eine App-Store-Zulassung wird nicht zugesagt. Kein Advertising-/Datenmining auf Basis von HealthKit-Werten. [Apple-App-Review-Regeln, insbesondere 2.1 und 5.1](https://developer.apple.com/app-store/review/guidelines/)
+
+**Offen:** Apple-Konto/Team, verfügbarer Mac oder Cloud-Runner, Bundle-IDs, reale iPhone-/Watch-Modelle und Authentifizierungsmodell. Noch kein signiertes Xcode-Projekt, kein nativer Simulatorbuild, keine TestFlight-Verteilung. CI/Signierung erst anhand des ersten auf macOS erzeugten und geprüften Projekts festlegen; keine scheinbar lauffähige Pipeline für nicht vorhandene Targets.
+
+**Aufwandsschätzung:** Architektur-/Buildentscheidung und lauffähige Targets 2–4 Tage; abgesicherter Produkt-Uplink plus Kopplung 4–8 Tage; TestFlight-/Privacy-Vorbereitung 2–4 Tage zuzüglich Geräteabnahme und möglicher Review-Rückfragen. Getrennte Stufen, keine sofortige Veröffentlichungsverpflichtung.

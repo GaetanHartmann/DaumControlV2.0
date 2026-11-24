@@ -40,9 +40,51 @@ def simulation_watts(speed, cadence, parameters, rider_kg=85, bike_kg=10):
     return max(25, min(400, round((gravity+rolling+parameters['cw']*wind*abs(wind))*v)))
 
 
+def telemetry_value(state, key):
+    """Prefer canonical availability over compatibility numeric placeholders.
+
+    Legacy standalone packet fixtures may omit the measurements map. Once that
+    map exists, an absent field or an explicitly unverified value is unknown;
+    neither a requested setpoint nor reported_power may replace measured power.
+    """
+    if 'measurements' in state:
+        fields = state.get('measurements')
+        item = fields.get(key) if isinstance(fields, dict) else None
+        if not isinstance(item, dict) or item.get('available') is not True or item.get('stale'):
+            return None
+        if item.get('quality') in ('device_reported_unverified', 'unverified', 'unknown', 'unavailable'):
+            return None
+        value = item.get('value')
+    else:
+        value = state.get(key)
+    if type(value) not in (int, float) or not math.isfinite(value):
+        return None
+    if key in ('speed', 'cadence') and value < 0 or key == 'heart_rate' and value <= 0:
+        return None
+    return value
+
+
 def indoor_bike_data(state):
-    hr = state.get('heart_rate')
-    flags = (1<<2)|(1<<6)|((1<<9) if hr is not None else 0)
-    value = struct.pack('<HHHh', flags, max(0,min(65535,round(state['speed']*100))),
-                        max(0,min(65535,round(state['cadence']*2))), max(-32768,min(32767,round(state['power']))))
-    return value + (bytes([max(0,min(255,hr))]) if hr is not None else b'')
+    """Encode only known fields; power and heart rate are optional in FTMS.
+
+    The existing single-record publisher always includes instantaneous speed.
+    Without a fresh speed it sends no record, rather than inventing zero or
+    setting More Data as if a second fragment containing speed would follow.
+    Fitness Machine Service 1.0.1, Indoor Bike Data (0x2AD2):
+    https://www.bluetooth.com/specifications/specs/fitness-machine-service-1-0-1/
+    """
+    speed = telemetry_value(state, 'speed')
+    if speed is None:
+        return b''
+    cadence = telemetry_value(state, 'cadence')
+    power = telemetry_value(state, 'power')
+    hr = telemetry_value(state, 'heart_rate')
+    flags = ((1 << 2) if cadence is not None else 0) | ((1 << 6) if power is not None else 0) | ((1 << 9) if hr is not None else 0)
+    value = struct.pack('<HH', flags, max(0, min(65535, round(speed * 100))))
+    if cadence is not None:
+        value += struct.pack('<H', max(0, min(65535, round(cadence * 2))))
+    if power is not None:
+        value += struct.pack('<h', max(-32768, min(32767, round(power))))
+    if hr is not None:
+        value += bytes([max(0, min(255, round(hr)))])
+    return value

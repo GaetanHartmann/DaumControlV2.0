@@ -7,10 +7,20 @@ Watt/FTP factors are editable application starting points, not NTNU prescription
 """
 import json
 import math
+from datetime import date
+from typing import Literal
 from pydantic import BaseModel, Field, model_validator
 
 
 class TrainingProfile(BaseModel):
+    # Optional descriptive profile data; only body mass is used by Watt/kg.
+    # Age/sex/height do not synthesize HRmax, calories, FTP or a diagnosis.
+    birth_year: int | None = Field(default=None, ge=1900)
+    weight_kg: float | None = Field(default=None, ge=20, le=300, allow_inf_nan=False)
+    height_cm: float | None = Field(default=None, ge=80, le=250, allow_inf_nan=False)
+    sex: Literal['female', 'male', 'diverse', 'unspecified'] | None = None
+    power_min_watts: int | None = Field(default=None, ge=25, le=400)
+    power_max_watts: int | None = Field(default=None, ge=25, le=400)
     ftp_watts: int | None = Field(default=None, ge=50, le=400)
     power_adjustment_watts: int = Field(default=0, ge=-100, le=100)
     comfortable_watts: int | None = Field(default=None, ge=25, le=250)
@@ -21,10 +31,14 @@ class TrainingProfile(BaseModel):
 
     @model_validator(mode='after')
     def validate_limits(self):
+        if self.birth_year is not None and self.birth_year > date.today().year:
+            raise ValueError('Geburtsjahr darf nicht in der Zukunft liegen')
         if self.hr_ceiling is not None and (self.hr_max is None or self.hr_ceiling > self.hr_max):
             raise ValueError('Pulsgrenze muss unter oder gleich der persönlichen HFmax liegen')
         if self.hr_min_watts >= self.hr_max_watts:
             raise ValueError('Watt-Untergrenze muss kleiner als Watt-Obergrenze sein')
+        if self.power_min_watts is not None and self.power_max_watts is not None and self.power_min_watts >= self.power_max_watts:
+            raise ValueError('Persönliche Watt-Untergrenze muss kleiner als Watt-Obergrenze sein')
         return self
 
 

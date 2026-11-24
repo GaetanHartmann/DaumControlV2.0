@@ -132,3 +132,34 @@ def test_daum_close_detaches_socket_on_reset_or_timeout(monkeypatch, failure):
         await daum.close()
 
     asyncio.run(run())
+
+
+def test_automatic_reconnect_and_explicit_disconnect(monkeypatch):
+    clients = []
+    def factory(*args, **kwargs):
+        client = FakeBleakClient(*args, **kwargs)
+        clients.append(client)
+        return client
+    install_fake_bleak(monkeypatch, factory)
+
+    async def run():
+        heart = HeartRate()
+        heart.RETRY_DELAY = .01
+        await heart.connect('strap')
+        old = heart.client
+        old.notify(None, bytes([0, 120]))
+        old.disconnected_callback(old)
+        assert heart.value() is None
+        await asyncio.wait_for(heart.reconnect_task, 1)
+        assert heart.client is clients[1] and heart.name == 'strap'
+        old.notify(None, bytes([0, 180]))
+        assert heart.value() is None
+        heart.client.notify(None, bytes([0, 135]))
+        assert heart.value() == 135
+        heart.client.disconnected_callback(heart.client)
+        task = heart.reconnect_task
+        await heart.disconnect()
+        assert task.cancelled() and heart.reconnect_address is None
+        await asyncio.sleep(.03)
+        assert len(clients) == 2 and heart.client is None
+    asyncio.run(run())

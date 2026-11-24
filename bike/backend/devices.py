@@ -5,6 +5,7 @@ https://ackstorm.de/projects/daum/daum.html . Independently implemented.
 """
 import asyncio
 import contextlib
+import math
 import time
 
 
@@ -33,6 +34,7 @@ class Daum:
     def __init__(self):
         self.reader = self.writer = None
         self.lock = asyncio.Lock()
+        self.power_guard = None
 
     async def connect(self):
         self.reader, self.writer = await asyncio.wait_for(
@@ -64,8 +66,23 @@ class Daum:
             return body[3:].decode('ascii')
 
     async def set_power(self, watts):
-        await self.command('S201')
-        await self.command(f'S23{watts:.2f}')
+        control = await self.command('S201')
+        if control.strip() != '1':
+            raise ConnectionError('Daum hat die Laststeuerung nicht bestätigt')
+        # S201 can wait for a network reply. Re-check the current request before
+        # actually writing S23 so a superseded slider/stop request is not sent.
+        if self.power_guard is not None and not self.power_guard():
+            return False
+        echo = await self.command(f'S23{watts:.2f}')
+        # SP-KOMM-PM1 §1.2: the response payload is the accepted value and may
+        # differ from the request. A transport ACK alone is not that value.
+        try:
+            accepted = float(echo.strip())
+        except (TypeError, ValueError):
+            return dict(confirmed=False, watts=None, source=None)
+        if not math.isfinite(accepted) or accepted < 0:
+            raise ValueError('Ungültige Watt-Rückmeldung vom Daum')
+        return dict(confirmed=True, watts=accepted, source='protocol_ack', detail='echoed_value')
 
     async def release(self):
         if self.writer:
@@ -83,6 +100,7 @@ class Daum:
 
 class HeartRate:
     UUID = '00002a37-0000-1000-8000-00805f9b34fb'
+    RETRY_DELAY = 5
 
     def __init__(self):
         self.client = None
@@ -90,6 +108,8 @@ class HeartRate:
         self.updated = 0
         self.name = ''
         self._generation = 0
+        self.reconnect_address = None
+        self.reconnect_task = None
 
     async def scan(self):
         from bleak import BleakScanner
@@ -99,8 +119,12 @@ class HeartRate:
                 if '0000180d-0000-1000-8000-00805f9b34fb' in (a.service_uuids or [])]
 
     async def connect(self, address):
-        from bleak import BleakClient
         await self.disconnect()
+        self.reconnect_address = address
+        await self._connect(address)
+
+    async def _connect(self, address):
+        from bleak import BleakClient
         generation = self._generation
         client = BleakClient(address, disconnected_callback=lambda source: self._disconnected(source, generation))
         self.client = client
@@ -115,7 +139,10 @@ class HeartRate:
             # request may clean up only its own client, never a replacement.
             with contextlib.suppress(Exception):
                 if self.client is client and self._generation == generation:
-                    await self.disconnect()
+                    self.client = None
+                    self._generation += 1
+                    self._clear()
+                    await client.disconnect()
                 else:
                     await client.disconnect()
             raise
@@ -130,6 +157,20 @@ class HeartRate:
             self.client = None
             self._generation += 1
             self._clear()
+            if self.reconnect_address and not (self.reconnect_task and not self.reconnect_task.done()):
+                self.reconnect_task = asyncio.create_task(self._reconnect())
+
+    async def _reconnect(self):
+        while self.reconnect_address and self.client is None:
+            await asyncio.sleep(self.RETRY_DELAY)
+            address = self.reconnect_address
+            if not address:
+                return
+            try:
+                await asyncio.wait_for(self._connect(address), 20)
+                return
+            except Exception:
+                continue
 
     def _notify_current(self, client, generation, sender, data):
         if self.client is client and self._generation == generation:
@@ -149,6 +190,12 @@ class HeartRate:
         return time.monotonic()-self.updated if self.updated else float('inf')
 
     async def disconnect(self):
+        self.reconnect_address = None
+        task, self.reconnect_task = self.reconnect_task, None
+        if task and task is not asyncio.current_task():
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
         client = self.client
         self.client = None
         self._generation += 1

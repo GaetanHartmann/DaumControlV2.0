@@ -3,7 +3,7 @@ import struct
 import sys
 import time
 import contextlib
-from .ftms import decode_control, indoor_bike_data, SUCCESS, UNSUPPORTED, INVALID, FAILED, DENIED
+from .ftms import decode_control, indoor_bike_data, telemetry_value, SUCCESS, UNSUPPORTED, INVALID, FAILED, DENIED
 
 
 def uuid(short):
@@ -22,11 +22,31 @@ class ZwiftBridge:
         self.revolutions = 0.0
         self.event_time = 0
         self.last_update = None
+        self.last_features = None
+
+    def features(self):
+        """Measurement support is independent of accepting a target-power write."""
+        simulated = getattr(self.engine, 'mode', None) == 'demo'
+        connector = getattr(self.engine, 'connector', None)
+        capabilities = getattr(connector, 'capabilities', {})
+        reads = capabilities.get('read', [])
+        quality = capabilities.get('measurement_quality') or {}
+        measured_power = (simulated or ('power' in reads and
+                          capabilities.get('measured_power_supported', True) is True and
+                          capabilities.get('power_quality') != 'device_reported_unverified' and
+                          quality.get('power') != 'device_reported_unverified'))
+        measurement_flags = (1 << 10)  # An independent BLE heart-rate sensor can be added.
+        if simulated or 'cadence' in reads:
+            measurement_flags |= 1 << 1
+        if measured_power:
+            measurement_flags |= 1 << 14
+        control_flags = ((1 << 3) | (1 << 13)) if simulated or 'power' in capabilities.get('control', []) else 0
+        return struct.pack('<II', measurement_flags, control_flags)
 
     def details(self):
         return dict(active=self.server is not None, armed=self.armed, owner=self.owner,
                     mode=self.engine.remote_mode, grade=self.engine.simulation['grade'],
-                    requested_power=self.engine.remote_target, applied_power=self.engine.target,
+                    requested_power=self.engine.remote_target, applied_power=getattr(self.engine, 'applied_target_watts', None),
                     last_command=self.last_command, last_result=self.last_result, commands=self.commands,
                     rider_kg=self.engine.rider_kg, bike_kg=self.engine.bike_kg)
 
@@ -36,7 +56,8 @@ class ZwiftBridge:
         from .bluez import Peripheral
         self.server = Peripheral(self.disconnected)
         ftms = self.server.service(uuid('1826'))
-        self.server.characteristic(ftms, uuid('2acc'), ['read'], struct.pack('<II', (1<<1)|(1<<10)|(1<<14), (1<<3)|(1<<13)))
+        self.last_features = self.features()
+        self.server.characteristic(ftms, uuid('2acc'), ['read'], self.last_features)
         self.server.characteristic(ftms, uuid('2ad2'), ['notify'], indoor_bike_data(self.engine.snapshot()))
         self.server.characteristic(ftms, uuid('2ad8'), ['read'], struct.pack('<hhH',25,400,1))
         self.server.characteristic(ftms, uuid('2ad9'), ['write','indicate'], write=self.control, lost=self.connection_lost)
@@ -44,7 +65,8 @@ class ZwiftBridge:
         cps = self.server.service(uuid('1818'))
         self.server.characteristic(cps, uuid('2a65'), ['read'], struct.pack('<I',8))
         self.server.characteristic(cps, uuid('2a5d'), ['read'], b'\x0d')
-        self.server.characteristic(cps, uuid('2a63'), ['notify'], struct.pack('<HhHH',32,0,0,0))
+        # No initial zero-power measurement: notify only after a known sample.
+        self.server.characteristic(cps, uuid('2a63'), ['notify'])
         hr = self.server.service(uuid('180d'))
         self.server.characteristic(hr, uuid('2a37'), ['notify'])
         try:
@@ -115,17 +137,34 @@ class ZwiftBridge:
     def publish(self,state):
         if not self.server:
             return
+        features = self.features()
+        if features != self.last_features:
+            # Keep subsequent feature reads honest after switching demo/device.
+            # Clients caching features still need to reconnect the sender.
+            self.server.update(uuid('2acc'), features)
+            self.last_features = features
         now = time.monotonic()
         dt = min(3,now-self.last_update) if self.last_update else 0
         self.last_update = now
-        previous = int(self.revolutions)
-        self.revolutions += state['cadence']*dt/60
-        if int(self.revolutions)>previous and state['cadence']:
-            self.event_time = int((now-(self.revolutions%1)*60/state['cadence'])*1024)%65536
-        self.server.update(uuid('2a63'),struct.pack('<HhHH',32,int(state['power']),int(self.revolutions)%65536,self.event_time))
-        self.server.update(uuid('2ad2'),indoor_bike_data(state))
-        if state['heart_rate'] is not None:
-            self.server.update(uuid('2a37'),bytes([0,max(0,min(255,state['heart_rate']))]))
+        cadence = telemetry_value(state, 'cadence')
+        if cadence is not None:
+            previous = int(self.revolutions)
+            self.revolutions += cadence*dt/60
+            if int(self.revolutions)>previous and cadence:
+                self.event_time = int((now-(self.revolutions%1)*60/cadence)*1024)%65536
+        power = telemetry_value(state, 'power')
+        if power is not None:
+            flags = 32 if cadence is not None else 0
+            packet = struct.pack('<Hh', flags, max(-32768, min(32767, round(power))))
+            if cadence is not None:
+                packet += struct.pack('<HH', int(self.revolutions)%65536, self.event_time)
+            self.server.update(uuid('2a63'), packet)
+        ftms = indoor_bike_data(state)
+        if ftms:
+            self.server.update(uuid('2ad2'), ftms)
+        hr = telemetry_value(state, 'heart_rate')
+        if hr is not None:
+            self.server.update(uuid('2a37'),bytes([0,max(0,min(255,round(hr)))]))
 
     async def stop(self):
         self.revoke()
