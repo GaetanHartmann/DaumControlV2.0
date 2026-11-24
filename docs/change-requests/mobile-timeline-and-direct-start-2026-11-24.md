@@ -40,3 +40,17 @@ Die gemessene CPU-Last lag bei 0,18. Das ist kein End-to-End-Messwert des Handys
 - Katalog-/Coach- und Provenienz-Browserprüfungen bestanden. Sämtliche Steuerprüfungen laufen gegen isolierte Demo-Server oder ausdrücklich synthetische UI-Verträge, ohne physisches Ergometer.
 
 Screenshots aus der mobilen Browserprüfung (Vorschau, keine echten Messwerte): [normale Zeitachse](../screenshots/mobile-timeline-390x844.png), [Vollbild](../screenshots/mobile-timeline-fullscreen-390x844.png).
+
+## Auslieferung auf den Pi
+
+Der fertige Code ist als `2c342c5` auf `feat/fitness-cockpit` committed und gepusht. Das Paket wurde zunächst ausschließlich bereitgelegt, während eine echte 25-Minuten-Einheit lief. Erst nach Planende, erfolgreichem Speichern und zwei bestätigten Leerlaufzuständen wurde installiert. Die Fahrt wurde weder pausiert noch vorzeitig gestoppt.
+
+- Paket: 52 Dateien, SHA-256 `edc0f6c774439df0613b6d6cf0ff8408f5db6a9d1db38b66af0e0b90080776fb`.
+- Stage: `/home/gha/fitness-cockpit-stage-20261124-mobile-edc0f6c7`.
+- Rücknahme-Backup: `/home/gha/daum-studio/backups/before-cockpit-20261124-203819-906882`.
+- Originaldaten vollständig erhalten: 2 Benutzer, 22 Pläne, **7 Fahrten einschließlich der gerade beendeten Einheit**, 2 Einstellungen und 5 Profilprüfungen; alle zehn Anwendungstabellen wurden auf unveränderte Bestandszeilen geprüft.
+- Sämtliche 52 installierten Dateien stimmen mit dem Manifest überein. Die Abschaltkonfiguration blieb unverändert. Anschließend war der Daum wieder verbunden; es wurde keine neue Trainingseinheit und kein Watt-Test ausgeführt.
+- **207 Pi-Tests bestanden, ein optionaler XSD-Test übersprungen**. Die zwei Windows-Native-Bridge-Tests werden nicht auf den Pi kopiert.
+- Die tatsächlich vom Pi ausgelieferte Oberfläche wurde in einem separaten Windows-Browser bei 390×844 und 800×480 geprüft: adaptive ViewBox, erreichbare direkte Watt-Tasten und Auswahl ohne zusätzliche POSTs oder `/session`-Abruf. Gemessene Auswahlzeit dieses Clients: etwa 180 ms; kein Messwert eines physischen Handys. Alle Steuer-POSTs waren für diese Prüfung ausdrücklich blockiert; Backend blieb im Leerlauf und ohne JS-Fehler.
+
+Frontend-Build: `index-BCRUVb22.js`, `index-mQTP8dpA.css`. Auf bereits geöffneten Handy-/Pi-Seiten einmal neu laden, damit das neue JavaScript aktiv wird. Die automatische Wiederaufnahme eines Trainings bleibt ausgeschlossen.
